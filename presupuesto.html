@@ -1,0 +1,171 @@
+<!DOCTYPE html><html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="Plan">
+<meta name="theme-color" content="#123a5e"><title>Plan de presupuesto</title>
+<link rel="apple-touch-icon" id="ati"><link rel="icon" id="fav"><link rel="manifest" id="man">
+<style>
+:root{--b:#123a5e;--g:#1a8a3f;--r:#c62828;--y:#e0a100;--bg:#eef2f6}
+*{box-sizing:border-box}html,body{margin:0;overflow-x:hidden;max-width:100%}
+body{font-family:-apple-system,system-ui,sans-serif;background:var(--bg);color:#1c1c1c;font-size:16px;padding-bottom:calc(76px + env(safe-area-inset-bottom))}
+header{background:var(--b);color:#fff;padding:calc(env(safe-area-inset-top) + 10px) calc(14px + env(safe-area-inset-right)) 10px calc(14px + env(safe-area-inset-left));position:sticky;top:0;z-index:5}
+header h1{font-size:18px;margin:0}header .sub{font-size:13px;opacity:.85;margin-top:2px}
+nav{position:fixed;bottom:0;left:0;right:0;background:#fff;display:flex;border-top:1px solid #ccd;padding-bottom:env(safe-area-inset-bottom);z-index:6}
+nav button{flex:1;border:0;background:none;padding:10px 2px 8px;font-size:13px;color:#667;min-height:58px}nav button b{display:block;font-size:20px}
+nav button.on{color:var(--b);font-weight:700}
+main{padding:10px calc(10px + env(safe-area-inset-right)) 10px calc(10px + env(safe-area-inset-left));max-width:1400px;margin:auto}
+.card{background:#fff;border-radius:14px;padding:12px;margin-bottom:10px;box-shadow:0 1px 3px #0001;min-width:0}
+h2{font-size:16px;margin:0 0 8px;display:flex;justify-content:space-between;align-items:center;gap:6px}
+.dot{width:12px;height:12px;border-radius:50%;display:inline-block;flex:0 0 12px}
+.it{border-top:1px solid #eef;padding:8px 0}.it:first-of-type{border:0}
+.l1{display:flex;align-items:center;gap:8px}.l1 .n{flex:1;min-width:0;font-weight:600;font-size:15px;overflow:hidden;text-overflow:ellipsis}
+.l1 input[type=checkbox]{width:28px;height:28px;flex:0 0 28px}
+.l2{display:grid;grid-template-columns:1fr 1fr 64px;gap:6px;margin-top:6px}
+label.f{font-size:11px;color:#667;display:block}label.f input{width:100%;font-size:16px;padding:9px 8px;border:1px solid #ccd;border-radius:9px;text-align:right}
+.bar{height:7px;background:#e4e8ee;border-radius:4px;margin-top:6px;overflow:hidden}.bar i{display:block;height:100%;background:var(--g)}
+.paid .n{text-decoration:line-through;color:#889}.note{font-size:12px;color:#a66100}
+.tot{display:flex;justify-content:space-between;font-size:15px;padding:4px 0}.big{font-size:20px;font-weight:700}
+.neg{color:var(--r)}.pos{color:var(--g)}.warn{background:#fdecea;color:var(--r);border-radius:10px;padding:9px;margin:6px 0;font-size:14px}
+.ok{background:#e8f5e9;color:#1b5e20;border-radius:10px;padding:9px;margin:6px 0;font-size:14px}
+.msel{display:flex;gap:6px;overflow-x:auto;margin-bottom:10px;-webkit-overflow-scrolling:touch}.msel button{flex:0 0 auto;padding:9px 13px;border-radius:18px;border:0;background:#dfe6ee;font-size:15px;min-height:44px}
+.msel button.on{background:var(--b);color:#fff}
+.btn{border:0;border-radius:11px;padding:12px 14px;font-size:15px;background:var(--b);color:#fff;min-height:46px}.btn.s{background:#dfe6ee;color:#123}.btn.r{background:var(--r)}
+.row{display:flex;gap:8px;flex-wrap:wrap}.row>*{flex:1 1 140px}
+input.t,select.t{width:100%;font-size:16px;padding:10px;border:1px solid #ccd;border-radius:9px;background:#fff}
+table{width:100%;border-collapse:collapse;font-size:13px}td,th{padding:6px 3px;text-align:right;border-bottom:1px solid #eef}td:first-child,th:first-child{text-align:left}
+.tw{overflow-x:auto;max-width:100%}.del{border:0;background:#eee;border-radius:9px;width:44px;height:44px;font-size:18px}
+.grid{display:grid;gap:10px}.mgrid{display:grid;gap:8px;grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+.mc{background:#f6f8fb;border-radius:10px;padding:8px;font-size:13px}.mc b{display:block;font-size:14px}
+svg{width:100%;height:auto;display:block}
+@media(min-width:760px){.grid.two{grid-template-columns:1fr 1fr}.l2{grid-template-columns:1fr 1fr 70px}}
+@media(min-width:1100px){.grid.two{grid-template-columns:1fr 1fr 1fr}}
+.pr{display:grid;grid-template-columns:22px minmax(0,1fr) 84px 72px 0px;gap:4px;align-items:center;padding:6px 2px 6px 4px;border-bottom:1px solid #eef}
+.pr .pn{grid-column:2/6}.pr .cd{grid-column:2/3;max-width:110px;justify-self:end}.pr .cp{grid-column:3/4}.pr .cf{grid-column:4/5}.pr .mv{grid-column:2/5;display:flex;gap:6px;justify-content:flex-end}.pr .mv button{border:0;background:#e6ebf1;border-radius:8px;width:44px;height:36px;font-size:15px}
+.pr input[type=number]{width:100%;font-size:16px;padding:8px 4px;border:1px solid #ccd;border-radius:8px;text-align:right}.pr b{text-align:right;font-size:13px}
+.pr .nm{width:100%;font-size:15px;font-weight:600;border:0;background:transparent;padding:6px 0}.num{font-weight:700;color:#556}.hc{display:none}.hd{text-align:right;padding-right:6px}.unc{background:#fdecea}
+@media(min-width:760px){.pr{grid-template-columns:30px minmax(0,1fr) 110px 110px 100px 150px}.pr .pn,.pr .cd,.pr .cp,.pr .cf,.pr .mv{grid-column:auto;max-width:none}.hc{display:block}.hd{text-align:left}}
+</style></head><body>
+<header><h1>Plan de presupuesto</h1><div class="sub" id="hsub"></div></header>
+<main id="main"><noscript><p style="padding:20px">Esta app necesita JavaScript. Ábrala en Safari.</p></noscript></main>
+<nav id="nav"></nav>
+<script>
+const K='plan_presupuesto_vacio_v1',$=i=>document.getElementById(i);
+const f=x=>(x<-0.004?'−':'')+'$'+Math.abs(Math.round(x*100)/100).toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:2});
+const MN=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+const now=new Date(),YM=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+const months=[...Array(12)].map((_,i)=>YM(new Date(now.getFullYear(),now.getMonth()+i,1))),cm=months[0];
+const ml=ym=>MN[+ym.slice(5)-1]+' '+ym.slice(2,4);
+const TIERS=[['t1','1) SUPERVIVENCIA obligatoria','Pagar siempre primero. No recortar.'],['t2','2) Deudas – pagos mínimos','Solo el mínimo; evita multas y daño al crédito.'],['t3','3) Negocio esencial (apartado mensual)','Guardar cada mes para no quedarse sin licencias y software.'],['t4','4) Opcional / recortable','Aquí NO gastar mientras haya déficit.']];
+let id=0;const I=(t,n,b,d,note,hist,ov)=>({id:'i'+(id++),t,n,b,d,note:note||'',hist:hist||0,ov:ov||{}});
+function def(){id=0;return{bal:0,goal:1800,w:{Seguro:1,Probable:.6,Posible:0},
+items:[I('t1','Pago del truck',687,0),I('t1','Seguro del truck',218.35,0),I('t1','Seguro de la compañía',178.74,0),I('t1','Seguro compañía (2do, confirmar)',179.19,0,'⚠ confirmar si es recurrente'),
+I('t1','Gasolina',200,0),I('t1','Teléfono',97.44,0),I('t1','Storage',185,0),I('t1','Comida',298,0),
+I('t2','Tarjeta A',129,0,'Nov: $253; luego $129',0,{'2026-11':253}),I('t2','Tarjeta B',76,0),I('t2','Tarjeta C',45,0),I('t2','Tarjeta D',60,0),
+I('t3','Software (apartado mensual)',189,0),I('t3','Licencias (apartado mensual)',45,0),I('t3','Reporte anual (apartado mensual)',25,0),
+I('t4','Restaurantes (límite)',0,0),I('t4','Suscripciones (límite)',50,0),I('t4','Compras (límite)',50,0),I('t4','Entretenimiento (límite)',0,0),I('t4','Salud (límite)',50,0),I('t4','Transporte (límite)',40,0)],
+inc:[{n:'Ingreso fijo',a:1500,d:1}],jobs:[],act:{},paid:{},put:{},avail:{}}}
+let S,tab='pri',sel=cm;
+function load(){try{S=JSON.parse(localStorage.getItem(K))}catch(e){S=null}if(!S||!S.items){S=def();save()}S.put=S.put||{};S.avail=S.avail||{};}
+const save=()=>{try{localStorage.setItem(K,JSON.stringify(S))}catch(e){}};
+const bud=(x,ym)=>x.ov[ym]!=null?+x.ov[ym]:+x.b;
+const act=(x,ym)=>(S.act[ym]||{})[x.id];const isPaid=(k,ym)=>!!(S.paid[ym]||{})[k];
+const tierSum=(t,ym)=>S.items.filter(x=>x.t==t).reduce((a,x)=>a+bud(x,ym),0);
+const fixedInc=()=>S.inc.reduce((a,x)=>a+(+x.a||0),0);
+function jobsInc(ym,mode){return S.jobs.filter(j=>j.m==ym).reduce((a,j)=>a+(+j.a||0)*(mode=='opt'?(j.p=='Posible'?1:1):mode=='exp'?(S.w[j.p]||0):0),0)}
+function remainingOut(ym){return S.items.reduce((a,x)=>{const b=bud(x,ym);if(ym!=cm)return a+b;if(isPaid(x.id,ym))return a;const s=act(x,ym)||0;return a+Math.max(0,b-s)},0)}
+function remainingIn(ym,mode){let fi=S.inc.reduce((a,x,i)=>a+(ym==cm&&isPaid('inc'+i,ym)?0:+x.a||0),0);return fi+jobsInc(ym,mode)}
+function proj(mode){let c=+S.bal;return months.map(ym=>{const i=remainingIn(ym,mode),o=remainingOut(ym);c+=i-o;return{ym,i,o,c}})}
+const survMin=ym=>tierSum('t1',ym)+tierSum('t2',ym),withT3=ym=>survMin(ym)+tierSum('t3',ym);
+function render(){if(!S)S=def();$('nav').innerHTML=[['pri','🔢','Prioridad'],['mes','📅','Mes'],['ing','💵','Ingresos'],['pro','📈','Proyección'],['aj','⚙️','Ajustes']].map(([k,e,n])=>`<button class="${tab==k?'on':''}" onclick="tab='${k}';render();scrollTo(0,0)"><b>${e}</b>${n}</button>`).join('');
+const p=proj('exp');const out=p.find(x=>x.c<0);$('hsub').textContent=`Saldo hoy ${f(S.bal)} · ${out?'Sin dinero en '+ml(out.ym)+' (esperado)':'Proyección esperada positiva'}`;
+$('main').innerHTML=({pri:vPri,mes:vMes,ing:vIng,pro:vPro,aj:vAj})[tab]()}
+function light(t,ym){const its=S.items.filter(x=>x.t==t);if(t=='t4'){const over=its.some(x=>(act(x,ym)||0)>bud(x,ym));return over?'var(--r)':'var(--g)'}
+const unpaid=its.filter(x=>!isPaid(x.id,ym)).length;return unpaid==0?'var(--g)':(ym==cm?'var(--y)':'#9aa')}
+
+const TC={t1:'#1a8a3f',t2:'#e0a100',t3:'#6a5acd',t4:'#c62828'};
+function vPri(){const ym=sel,P=S.put[ym]||{};let h=`<div class="msel">${months.map(m=>`<button class="${m==ym?'on':''}" onclick="sel='${m}';render()">${ml(m)}</button>`).join('')}</div>`;
+const av=S.avail[ym]??'',tD=S.items.reduce((a,x)=>a+bud(x,ym),0),tP=S.items.reduce((a,x)=>a+(+P[x.id]||0),0);
+let firstGap=S.items.findIndex(x=>(+P[x.id]||0)<bud(x,ym)-0.005);
+h+=`<div class=card><label class=f style="font-size:14px;color:#123">Dinero disponible este mes<input type=number inputmode=decimal value="${av}" placeholder="0" onchange="S.avail[sel]=this.value===''?undefined:+this.value;save();render()" style="font-size:20px"></label>
+<div class=row style="margin-top:8px"><button class=btn onclick="repartir()">Repartir por prioridad</button><button class="btn s" onclick="S.put[sel]={};save();render()">Limpiar</button></div>
+<div class=tot style="margin-top:8px"><span>Debo (total)</span><b>${f(tD)}</b></div><div class=tot><span>Pongo (total)</span><b>${f(tP)}</b></div>
+<div class="tot big"><span>Falta</span><span class="${tD-tP>0.005?'neg':'pos'}">${f(tD-tP)}</span></div>
+${av!==''?`<div class=tot><span>Disponible sin asignar</span><b class="${av-tP<-0.004?'neg':'pos'}">${f(av-tP)}</b></div>`:''}
+${firstGap>=0&&tP>0?`<div class=warn>El dinero se acaba en la fila ${firstGap+1}: ${esc(S.items[firstGap].n)}. Las filas en rojo quedan sin cubrir.</div>`:tP>0?'<div class=ok>✓ Todo cubierto</div>':''}</div>
+<div class=card style="padding:6px 8px"><div class=pr style="font-size:12px;color:#667;font-weight:700"><span>#</span><span class=hc>Concepto</span><span class=hd>Debo</span><span>Pongo</span><span>Falta</span></div>`;
+S.items.forEach((x,i)=>{const d=bud(x,ym),p=+P[x.id]||0,fa=d-p,unc=fa>0.005&&(tP>0||av!=='');
+h+=`<div class="pr ${unc?'unc':''}" style="border-left:4px solid ${TC[x.t]}"><span class=num>${i+1}</span><span class=pn><input class=nm value="${esc(x.n)}" onchange="gi('${x.id}').n=this.value;save()">${x.note?`<small class=note>${esc(x.note)}</small>`:''}</span>
+<input type=number inputmode=decimal value="${d}" onchange="setB('${x.id}',this.value)" aria-label="Debo" class=cd>
+<input type=number inputmode=decimal value="${P[x.id]??''}" placeholder="0" onchange="setPut('${x.id}',this.value)" aria-label="Pongo" class=cp>
+<b class="cf ${fa>0.005?'neg':'pos'}">${f(fa)}</b><span class=mv><button onclick="mv(${i},-1)" aria-label="subir">▲</button><button onclick="mv(${i},1)" aria-label="bajar">▼</button><button onclick="delItem('${x.id}')" aria-label="eliminar">✕</button></span></div>`});
+return h+`<button class="btn s" style="width:100%;margin-top:8px" onclick="addItem('t4')">+ Agregar fila</button></div><div style="font-size:12px;color:#667;padding:0 6px">Colores: verde = supervivencia, amarillo = tarjetas, morado = negocio, rojo = opcional.</div>`}
+function setPut(k,v){(S.put[sel]=S.put[sel]||{})[k]=v===''?undefined:+v;save();render()}
+function repartir(){let m=+(S.avail[sel]||0);const P={};S.items.forEach(x=>{const d=bud(x,sel),g=Math.max(0,Math.min(d,m));P[x.id]=Math.round(g*100)/100;m-=g});S.put[sel]=P;save();render()}
+function mv(i,d){const j=i+d;if(j<0||j>=S.items.length)return;const t=S.items[i];S.items[i]=S.items[j];S.items[j]=t;save();render()}
+function vMes(){const ym=sel;let h=`<div class="msel">${months.map(m=>`<button class="${m==ym?'on':''}" onclick="sel='${m}';render()">${ml(m)}</button>`).join('')}</div>`;
+const tot=S.items.reduce((a,x)=>a+bud(x,ym),0),spent=S.items.reduce((a,x)=>a+(act(x,ym)||0),0),inc=fixedInc()+jobsInc(ym,'exp');
+const w=[];S.items.filter(x=>x.t=='t4').forEach(x=>{const a=act(x,ym)||0;if(a>bud(x,ym))w.push(`⚠ ${x.n}: gastado ${f(a)} supera el límite ${f(bud(x,ym))}`)});
+const pm=proj('exp').find(x=>x.ym==ym);if(pm&&pm.c<0)w.push(`⚠ Este mes el saldo proyectado queda en ${f(pm.c)} (escenario esperado)`);
+h+=`<div class="card"><h2>${ml(ym)} – resumen</h2><div class="tot"><span>Ingreso esperado</span><b>${f(inc)}</b></div><div class="tot"><span>Presupuesto gastos</span><b>${f(tot)}</b></div>
+<div class="tot"><span>Gastado real</span><b>${f(spent)}</b></div><div class="tot big"><span>Balance del mes</span><span class="${inc-tot<0?'neg':'pos'}">${f(inc-tot)}</span></div>
+<div class="tot"><span>Saldo acumulado proyectado</span><b class="${pm&&pm.c<0?'neg':'pos'}">${pm?f(pm.c):'-'}</b></div>
+${w.map(x=>`<div class=warn>${x}</div>`).join('')||'<div class=ok>✓ Sin alertas este mes</div>'}</div>
+<div class="card"><h2>Dónde gastar / dónde NO</h2>${TIERS.map(([t,n,g])=>`<div class="tot"><span><span class=dot style="background:${t=='t4'?'var(--r)':t=='t3'?'var(--y)':'var(--g)'}"></span> ${n.slice(3)}</span><b>${f(tierSum(t,ym))}</b></div><div style="font-size:12px;color:#667;margin:-2px 0 4px 20px">${t=='t4'?'🔴 ':t=='t3'?'🟡 ':'🟢 '}${g}</div>`).join('')}</div><div class="grid two">`;
+TIERS.forEach(([t,n])=>{const its=S.items.filter(x=>x.t==t);h+=`<div class="card"><h2><span><span class=dot style="background:${light(t,ym)}"></span> ${n}</span><span>${f(tierSum(t,ym))}</span></h2>`;
+its.forEach(x=>{const b=bud(x,ym),a=act(x,ym),pc=b>0?Math.min(100,(a||0)/b*100):((a||0)>0?100:0),pd=isPaid(x.id,ym);
+h+=`<div class="it ${pd?'paid':''}"><div class=l1><input type=checkbox ${pd?'checked':''} onchange="setPaid('${x.id}',this.checked)" aria-label="pagado"><span class=n>${x.n}</span><button class=del onclick="delItem('${x.id}')">✕</button></div>
+${x.note?`<div class=note>${x.note}</div>`:''}<div class=l2><label class=f>Presupuesto<input type=number inputmode=decimal value="${b}" onchange="setB('${x.id}',this.value)"></label>
+<label class=f>Gastado real<input type=number inputmode=decimal value="${a??''}" placeholder="0" onchange="setA('${x.id}',this.value)"></label>
+<label class=f>Día<input type=number inputmode=numeric value="${x.d||''}" placeholder="–" onchange="setD('${x.id}',this.value)"></label></div>
+<div class=bar><i style="width:${pc}%;background:${(a||0)>b?'var(--r)':'var(--g)'}"></i></div></div>`});
+h+=`<button class="btn s" style="width:100%;margin-top:6px" onclick="addItem('${t}')">+ Agregar partida</button></div>`});return h+'</div>'}
+function vIng(){let h=`<div class="card"><h2>Ingreso fijo</h2>${S.inc.map((x,i)=>`<div class=it><div class=row><input class=t value="${esc(x.n)}" onchange="S.inc[${i}].n=this.value;save()">
+<label class=f>Monto/mes<input type=number inputmode=decimal value="${x.a}" onchange="S.inc[${i}].a=+this.value;save();render()"></label><label class=f>Día<input type=number value="${x.d}" onchange="S.inc[${i}].d=+this.value;save()"></label></div>
+<label style="display:flex;gap:8px;align-items:center;margin-top:6px;font-size:14px"><input type=checkbox style="width:26px;height:26px" ${isPaid('inc'+i,cm)?'checked':''} onchange="setPaid('inc${i}',this.checked)"> Ya recibido en ${ml(cm)}</label></div>`).join('')}
+</div>
+<div class="card"><h2>Trabajos</h2><div class=row><input class=t id=jn placeholder="Nombre del trabajo"><input class=t id=ja type=number inputmode=decimal placeholder="Monto estimado">
+<select class=t id=jm>${months.map(m=>`<option value=${m}>${ml(m)}</option>`).join('')}</select><select class=t id=jp><option>Seguro</option><option selected>Probable</option><option>Posible</option></select>
+<button class=btn onclick="addJob()">+ Agregar</button></div>`;
+S.jobs.forEach((j,i)=>h+=`<div class=it><div class=l1><span class=n>${esc(j.n)} – ${ml(j.m)}</span><b>${f(j.a)}</b><button class=del onclick="S.jobs.splice(${i},1);save();render()">✕</button></div><div class=note>${j.p} (cuenta ${Math.round((S.w[j.p]||0)*100)}% en esperado)</div></div>`);
+if(!S.jobs.length)h+='<p style="color:#667;font-size:14px">Aún no hay trabajos. Agregue cada trabajo con su mes y probabilidad.</p>';return h+'</div>'}
+function chart(ps){const W=640,H=230,P=34;const all=ps.flatMap(p=>p.map(x=>x.c)).concat([0]);const mx=Math.max(...all),mn=Math.min(...all),rg=(mx-mn)||1;
+const y=v=>P/2+(mx-v)/rg*(H-P),x=i=>P+i*(W-P-8)/11,col=['#c62828','#123a5e','#1a8a3f'];
+let s=`<svg viewBox="0 0 ${W} ${H}" role=img><line x1=${P} x2=${W} y1=${y(0)} y2=${y(0)} stroke="#999" stroke-dasharray="4"/>`;
+const lbl=v=>Math.abs(v)>=1000?(v/1000).toFixed(1)+"k":String(Math.round(v));[...new Set([mx,0,mn])].forEach(v=>s+=`<text x=2 y=${y(v)+4} font-size=11 fill="#555">${lbl(v)}</text>`);
+months.forEach((m,i)=>i%2==0&&(s+=`<text x=${x(i)-12} y=${H-2} font-size=11 fill="#555">${ml(m)}</text>`));
+ps.forEach((p,k)=>s+=`<polyline fill=none stroke=${col[k]} stroke-width=3 points="${p.map((d,i)=>x(i)+','+y(d.c)).join(' ')}"/>`);return s+'</svg>'}
+function vPro(){const sc=[['Sin trabajos (solo fijo)','fix'],['Esperado (seguro + probable ponderado)','exp'],['Optimista (todos)','opt']];const ps=sc.map(s=>proj(s[1]));
+let h=`<div class="card"><h2>Proyección 12 meses</h2>${chart(ps)}<div style="font-size:13px;margin-top:6px"><span style="color:#c62828">■</span> Sin trabajos &nbsp;<span style="color:#123a5e">■</span> Esperado &nbsp;<span style="color:#1a8a3f">■</span> Optimista</div></div><div class="grid two">`;
+sc.forEach(([n],k)=>{const p=ps[k],o=p.find(x=>x.c<0);h+=`<div class=card><h2>${n}</h2><div class=tot><span>Saldo en ${ml(months[11])}</span><b class="${p[11].c<0?'neg':'pos'}">${f(p[11].c)}</b></div>
+<div class=tot><span>Se queda sin dinero</span><b class="${o?'neg':'pos'}">${o?ml(o.ym):'No'}</b></div><div class=tot><span>Punto más bajo</span><b>${f(Math.min(...p.map(x=>x.c)))}</b></div></div>`});
+const nx=months[1];const g=S.goal,pe=ps[1],saved=Math.max(0,pe[Math.min(5,11)].c);
+h+=`</div><div class=card><h2>Ingreso mínimo necesario (mes típico, ${ml(nx)})</h2><div class=tot><span>Sobrevivir (niveles 1+2)</span><b>${f(survMin(nx))}</b></div>
+<div class=tot><span>+ negocio esencial (nivel 3)</span><b>${f(withT3(nx))}</b></div><div class=tot><span>+ opcional al límite (nivel 4)</span><b>${f(withT3(nx)+tierSum('t4',nx))}</b></div>
+<div class=tot><span>Ingreso fijo actual</span><b>${f(fixedInc())}</b></div><div class="tot big"><span>Falta por mes (niveles 1–3)</span><span class=neg>${f(Math.max(0,withT3(nx)-fixedInc()))}</span></div></div>
+<div class=card><h2>Fondo de mudanza – meta ${f(g)}</h2><div class=bar style="height:16px"><i style="width:${Math.min(100,saved/g*100)}%"></i></div><div class=note style="color:#334;margin-top:6px">Saldo positivo proyectado en ${ml(months[5])} (esperado): ${f(saved)} de ${f(g)}</div></div>
+<div class=card><h2>Detalle mensual</h2><div class=mgrid>${months.map((m,i)=>`<div class=mc><b>${ml(m)}</b>Entra ${f(pe[i].i)}<br>Sale ${f(pe[i].o)}<br>Saldo <span class="${pe[i].c<0?'neg':'pos'}">${f(pe[i].c)}</span><br><small>Sin trabajos: <span class="${ps[0][i].c<0?'neg':'pos'}">${f(ps[0][i].c)}</span></small></div>`).join('')}</div></div>`;return h}
+function vAj(){return `<div class=card><h2>Saldo actual</h2><label class=f>Saldo de hoy (todas sus cuentas)<input type=number inputmode=decimal value="${S.bal}" onchange="S.bal=+this.value;save();render()"></label>
+<label class=f style="margin-top:8px">Meta fondo de mudanza<input type=number value="${S.goal}" onchange="S.goal=+this.value;save();render()"></label></div>
+<div class=card><h2>Peso de probabilidad (escenario esperado)</h2><div class=row>${['Seguro','Probable','Posible'].map(p=>`<label class=f>${p} %<input type=number value="${Math.round(S.w[p]*100)}" onchange="S.w['${p}']=this.value/100;save()"></label>`).join('')}</div></div>
+<div class=card><h2>Respaldo</h2><div class=row><button class=btn onclick="expJSON()">Exportar respaldo (JSON)</button><button class="btn s" onclick="$('imp').click()">Importar respaldo</button>
+<button class="btn s" onclick="expCSV()">Exportar CSV</button><button class="btn r" onclick="if(confirm('¿Borrar todo y volver a los valores iniciales?')){localStorage.removeItem(K);S=null;load();render()}">Reiniciar</button></div>
+<input type=file id=imp accept=".json,application/json" style="display:none" onchange="impJSON(this)"></div>
+<div class=card style="font-size:14px;color:#445"><b>Instalar:</b> iPhone/iPad → Safari → Compartir → “Agregar a pantalla de inicio”. Los datos se guardan solo en este dispositivo; exporte un respaldo con frecuencia. Montos “estimado” son aproximados.</div>`}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+const gi=k=>S.items.find(x=>x.id==k);
+function setPaid(k,v){const ym=k.startsWith('inc')?cm:sel;(S.paid[ym]=S.paid[ym]||{})[k]=v;save();render()}
+function setB(k,v){const x=gi(k);if(sel==cm&&!Object.keys(x.ov).length||confirm('¿Aplicar este presupuesto a todos los meses? (Cancelar = solo este mes)')){x.b=+v;x.ov={}}else x.ov[sel]=+v;save();render()}
+function setA(k,v){(S.act[sel]=S.act[sel]||{})[k]=v===''?undefined:+v;save();render()}
+function setD(k,v){gi(k).d=+v||0;save()}
+function delItem(k){if(confirm('¿Eliminar esta partida de todos los meses?')){S.items=S.items.filter(x=>x.id!=k);save();render()}}
+function addItem(t){const n=prompt('Nombre de la partida');if(!n)return;S.items.push({id:'u'+Date.now(),t,n,b:+(prompt('Presupuesto mensual','0')||0),d:0,note:'',hist:0,ov:{}});save();render()}
+function addJob(){const n=$('jn').value.trim(),a=+$('ja').value;if(!n||!a)return alert('Escriba nombre y monto');S.jobs.push({n,a,m:$('jm').value,p:$('jp').value});save();render()}
+function dl(name,txt,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([txt],{type}));a.download=name;document.body.appendChild(a);a.click();a.remove()}
+function expJSON(){dl('presupuesto_respaldo.json',JSON.stringify(S,null,1),'application/json')}
+function impJSON(el){const r=new FileReader();r.onload=()=>{try{const o=JSON.parse(r.result);if(!o.items)throw 0;S=o;save();render();alert('Respaldo importado')}catch(e){alert('Archivo inválido')}};r.readAsText(el.files[0])}
+function expCSV(){const L=[['Nivel','Partida',...months.map(ml)].join(',')];S.items.forEach(x=>L.push([x.t,'"'+x.n.replace(/"/g,'""')+'"',...months.map(m=>bud(x,m))].join(',')));
+['fix','exp','opt'].forEach(m=>L.push(['','Saldo proyectado '+m,...proj(m).map(x=>x.c.toFixed(2))].join(',')));dl('presupuesto_plan.csv','\ufeff'+L.join('\n'),'text/csv')}
+(function(){const c=document.createElement('canvas');c.width=c.height=180;const x=c.getContext('2d');x.fillStyle='#123a5e';x.fillRect(0,0,180,180);x.fillStyle='#fff';x.font='bold 100px sans-serif';x.textAlign='center';x.textBaseline='middle';x.fillText('$',90,96);
+const u=c.toDataURL();$('ati').href=u;$('fav').href=u;$('man').href='data:application/manifest+json,'+encodeURIComponent(JSON.stringify({name:'Plan de presupuesto',short_name:'Plan',display:'standalone',start_url:'.',background_color:'#eef2f6',theme_color:'#123a5e',icons:[{src:u,sizes:'180x180',type:'image/png'}]}))})();
+load();render();
+</script></body></html>
