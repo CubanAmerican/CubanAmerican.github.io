@@ -44,7 +44,7 @@ svg{width:100%;height:auto;display:block}
 .pr input[type=number]{width:100%;font-size:16px;padding:8px 4px;border:1px solid #ccd;border-radius:8px;text-align:right}.pr b{text-align:right;font-size:13px}
 .pr .nm{width:100%;font-size:15px;font-weight:600;border:0;background:transparent;padding:6px 0}.num{font-weight:700;color:#556}.hc{display:none}.hd{text-align:right;padding-right:6px}.unc{background:#fdecea}
 @media(min-width:760px){.pr{grid-template-columns:30px minmax(0,1fr) 110px 110px 100px 150px}.pr .pn,.pr .cd,.pr .cp,.pr .cf,.pr .mv{grid-column:auto;max-width:none}.hc{display:block}.hd{text-align:left}}
-#printbox{display:none}
+#printbox{display:none}.pprev{background:#fff;border:1px solid #ccd;padding:10px;font-size:12px;max-height:70vh;overflow:auto}.pprev .card{box-shadow:none;border:1px solid #ddd}.pprev .psec{border-top:2px dashed #aab;margin-top:10px;padding-top:6px}.pprev .phead h1{font-size:18px;margin:0}
 @media print{@page{size:letter portrait;margin:12mm}body{background:#fff!important;padding:0!important;font-size:11pt;color:#000}header,nav,main,.noprint{display:none!important}
 body.printing #printbox{display:block}#printbox .card{box-shadow:none;border:1px solid #ccc;break-inside:avoid;page-break-inside:avoid;margin:0 0 8px;padding:8px}
 .psec{break-before:page;page-break-before:always}.psec:first-of-type{break-before:auto;page-break-before:auto}.phead h1{font-size:18pt;margin:0}.phead{border-bottom:2px solid #123a5e;margin-bottom:8px;padding-bottom:4px;font-size:9pt}
@@ -82,9 +82,9 @@ function jobsInc(ym,mode){return S.jobs.filter(j=>j.m==ym).reduce((a,j)=>a+(+j.a
 function remainingOut(ym){return impCash(ym)+S.items.reduce((a,x)=>{const b=bud(x,ym);if(ym!=cm)return a+b;if(isPaid(x.id,ym))return a;const s=act(x,ym)||0;return a+Math.max(0,b-s)},0)}
 function remainingIn(ym,mode){let fi=S.inc.reduce((a,x,i)=>a+(ym==cm&&isPaid('inc'+i,ym)?0:+x.a||0),0);return fi+jobsInc(ym,mode)}
 const survMin=ym=>tierSum('t1',ym)+tierSum('t2',ym),withT3=ym=>survMin(ym)+tierSum('t3',ym);
-function render(){if(!S)S=def();$('nav').innerHTML=[['hoy','🏠','Hoy'],['pri','🔢','Prioridad'],['ing','💵','Ingresos'],['tra','🔨','Trabajo'],['pro','📈','Proyección'],['mas','🧰','Más']].map(([k,e,n])=>`<button class="${tab==k?'on':''}" onclick="tab='${k}';render();scrollTo(0,0)"><b>${e}</b>${n}</button>`).join('');
-const p=proj('exp');const out=p.find(x=>x.c<0);$('hsub').textContent=`Saldo hoy ${f(S.bal)} · ${out?'Sin dinero en '+ml(out.ym)+' (esperado)':'Proyección esperada positiva'}`;
-$('main').innerHTML=({hoy:vHoy,pri:vPri,mes:vMes,ing:vIng,tra:vTra,pro:vPro,aj:vAj,mas:vMas})[tab]()}
+function render(){if(!S)S=def();$('nav').innerHTML=[['hoy','🏠','Hoy'],['pri','🔢','Prioridad'],['ing','💵','Ingresos'],['tra','🔨','Trabajo'],['pro','📈','Proyección'],['imp','🖨️','Imprimir'],['mas','🧰','Más']].map(([k,e,n])=>`<button class="${tab==k?'on':''}" onclick="tab='${k}';render();scrollTo(0,0)"><b>${e}</b>${n}</button>`).join('');
+const p=proj(S.pr.scen,null,projMonths());const out=p.find(x=>x.c<0);$('hsub').textContent=`Saldo hoy ${f(S.bal)} · ${out?'Sin dinero en '+ml(out.ym)+' ('+SC[S.pr.scen][0].split(' (')[0]+')':'Proyección positiva ('+SC[S.pr.scen][0].split(' (')[0]+')'}`;
+$('main').innerHTML=({hoy:vHoy,pri:vPri,mes:vMes,ing:vIng,tra:vTra,pro:vPro,aj:vAj,mas:vMas,imp:vImp})[tab]()}
 function light(t,ym){const its=S.items.filter(x=>x.t==t);if(t=='t4'){const over=its.some(x=>(act(x,ym)||0)>bud(x,ym));return over?'var(--r)':'var(--g)'}
 const unpaid=its.filter(x=>!isPaid(x.id,ym)).length;return unpaid==0?'var(--g)':(ym==cm?'var(--y)':'#9aa')}
 
@@ -111,7 +111,7 @@ function mv(i,d){const j=i+d;if(j<0||j>=S.items.length)return;const t=S.items[i]
 function vMes(){const ym=sel;let h=`<div class="msel">${months.map(m=>`<button class="${m==ym?'on':''}" onclick="sel='${m}';render()">${ml(m)}</button>`).join('')}</div>`;
 const tot=S.items.reduce((a,x)=>a+bud(x,ym),0),spent=S.items.reduce((a,x)=>a+(act(x,ym)||0),0),inc=fixedInc()+jobsInc(ym,'exp');
 const w=[];S.items.filter(x=>x.t=='t4').forEach(x=>{const a=act(x,ym)||0;if(a>bud(x,ym))w.push(`⚠ ${x.n}: gastado ${f(a)} supera el límite ${f(bud(x,ym))}`)});
-const pm=proj('exp').find(x=>x.ym==ym);if(pm&&pm.c<0)w.push(`⚠ Este mes el saldo proyectado queda en ${f(pm.c)} (escenario esperado)`);
+const pm=proj(S.pr.scen,null,[ym])[0];if(pm&&pm.c<0)w.push(`⚠ Este mes el saldo proyectado queda en ${f(pm.c)} (${SC[S.pr.scen][0]})`);
 h+=`<div class="card"><h2>${ml(ym)} – resumen</h2><div class="tot"><span>Ingreso esperado</span><b>${f(inc)}</b></div><div class="tot"><span>Presupuesto gastos</span><b>${f(tot)}</b></div>
 <div class="tot"><span>Gastado real</span><b>${f(spent)}</b></div><div class="tot big"><span>Balance del mes</span><span class="${inc-tot<0?'neg':'pos'}">${f(inc-tot)}</span></div>
 <div class="tot"><span>Saldo acumulado proyectado</span><b class="${pm&&pm.c<0?'neg':'pos'}">${pm?f(pm.c):'-'}</b></div>
@@ -184,7 +184,7 @@ const box=document.getElementById('printbox');box.innerHTML=printHead(full);cons
 tabs.forEach((t,i)=>{tab=t;const sec=document.createElement('section');sec.className='psec';sec.innerHTML=`<h2 class=pt>${names[t]||t}</h2>`+({hoy:vHoy0,pri:vPri,tra:vTra0,pro:vPro,mas:vMas})[t]();box.appendChild(sec)});
 tab=keep;staticize(box);document.body.classList.add('printing');setTimeout(()=>{window.print()},60)}
 window.addEventListener('afterprint',()=>{document.body.classList.remove('printing');const b=document.getElementById('printbox');if(b)b.innerHTML=''});
-function printBar(){return `<div class="row noprint" style="margin-bottom:10px"><button class="btn s" onclick="doPrint(false)">🖨️ Imprimir / PDF</button><button class="btn s" onclick="doPrint(true)">📄 Reporte completo</button></div>`}
+function printBar(){return '';`<div class="row noprint" style="margin-bottom:10px"><button class="btn s" onclick="doPrint(false)">🖨️ Imprimir / PDF</button><button class="btn s" onclick="doPrint(true)">📄 Reporte completo</button></div>`}
 
 function vAj(){return `<div class=card><h2>Saldo actual</h2><label class=f>Saldo de hoy (todas sus cuentas)<input type=number inputmode=decimal value="${S.bal}" onchange="S.bal=+this.value;save();render()"></label>
 <label class=f style="margin-top:8px">Meta fondo de mudanza<input type=number value="${S.goal}" onchange="S.goal=+this.value;save();render()"></label></div>
@@ -234,7 +234,7 @@ S.items.forEach(x=>{if(x.d&&bud(x,months[1])>0)L.push({n:x.n,a:bud(x,months[1]),
 function irsNext(){const ds=[[0,15],[3,15],[5,15],[8,15]];for(let y=now.getFullYear();y<=now.getFullYear()+1;y++)for(const[m,d]of ds){const t=new Date(y,m,d);if(t>=now)return t}}
 function runout(p){const o=p.find(x=>x.c<0);return o?ml(o.ym):'No se acaba'}
 function vHoy(){return printBar()+impBtn()+vHoy0()}
-function vHoy0(){const g=monthGap(WI),dc=Math.max(0,(+S.bal+(+S.cushion||0)))/daily(),top=ranked().slice(0,2),np=nextPays(),p=proj('exp',WI),irs=irsNext();
+function vHoy0(){const g=monthGap(WI),dc=Math.max(0,(+S.bal+(+S.cushion||0)))/daily(),top=ranked().slice(0,2),np=nextPays(),p=proj(S.pr.scen,WI,projMonths()),p0=proj(S.pr.scen,WI,[cm])[0],pl=p[p.length-1],irs=irsNext();
 return `<div class=card style="text-align:center"><div style="font-size:14px;color:#667">${ml(cm)} · después de lo ya pagado</div>
 <div style="font-size:34px;font-weight:800;margin:6px 0" class="${g>0?'neg':'pos'}">${g>0?'Te faltan '+f(g):'Cubierto ✓'}</div>
 <div style="font-size:14px">${g>0?'para cubrir lo que queda de este mes':'te sobran '+f(-g)+' este mes'}</div></div>
@@ -242,7 +242,7 @@ return `<div class=card style="text-align:center"><div style="font-size:14px;col
 <div class=card><h2>Próximos 3 pagos</h2>${np.map(x=>`<div class=tot><span>${esc(x.n)} <small>(${x.d} ${ml(x.m).slice(0,3)})</small></span><b>${f(x.a)}</b></div>`).join('')||'<small>Agregue el día de pago en Mes</small>'}</div></div>
 <div class=card><h2>Enfoque de trabajo esta semana</h2>${top.map((j,k)=>`<div class=tot><span>${k+1}. ${esc(j.n)}</span><b>${f(j.pd)}/día</b></div>`).join('')}<button class="btn s" style="width:100%;margin-top:6px" onclick="tab='tra';render()">Ver plan de búsqueda</button></div>
 <div class=card><h2>Si gasto / Si cobro (este mes)</h2><div class=row><label class=f>Si gasto $<input type=number inputmode=decimal value="${WI.g||''}" placeholder="0" onchange="WI.g=+this.value||0;render()"></label><label class=f>Si cobro $<input type=number inputmode=decimal value="${WI.c||''}" placeholder="0" onchange="WI.c=+this.value||0;render()"></label></div>
-<div class=tot><span>Saldo fin de ${ml(cm)}</span><b class="${p[0].c<0?'neg':'pos'}">${f(p[0].c)}</b></div><div class=tot><span>El dinero se acaba en</span><b>${runout(p)}</b></div><div class=tot><span>Saldo en ${ml(months[11])}</span><b class="${p[11].c<0?'neg':'pos'}">${f(p[11].c)}</b></div>${WI.g||WI.c?'<button class="btn s" onclick="WI={g:0,c:0};render()">Borrar simulación</button>':''}</div>
+<small>Escenario: <b>${SC[S.pr.scen][0]}</b> (se cambia en Proyección)</small><div class=tot><span>Saldo fin de ${ml(cm)}</span><b class="${p0.c<0?'neg':'pos'}">${f(p0.c)}</b></div><div class=tot><span>El dinero se acaba en</span><b>${runout(p)}</b></div><div class=tot><span>${SC[S.pr.scen][0].split(' (')[0]} · saldo al final de ${ml(pl.ym)}</span><b class="${pl.c<0?'neg':'pos'}">${f(pl.c)}</b></div>${WI.g||WI.c?'<button class="btn s" onclick="WI={g:0,c:0};render()">Borrar simulación</button>':''}</div>
 <div class=card><h2>Traductor de gastos</h2><label class=f>Escriba un monto<input id=trin type=number inputmode=decimal placeholder="Ej. 60" oninput="$('trout').innerHTML=trad(+this.value)"></label><div id=trout style="margin-top:8px"></div></div>
 ${impCash(cm)||impCard(cm)?`<div class=card><h2>Imprevistos de ${ml(cm)}</h2><div class=tot><span>De efectivo</span><b class=neg>${f(impCash(cm))}</b></div><div class=tot><span>A tarjetas (deuda)</span><b>${f(impCard(cm))}</b></div></div>`:''}<div class=card><small>Próximo pago estimado de impuestos IRS: <b>${irs.toLocaleDateString('es-US',{day:'numeric',month:'short',year:'numeric'})}</b> · Apartado: ${f(S.taxSaved)}</small></div>`}
 function trad(a){if(!a)return '';const d=a/daily(),r1=S.items[0],pr=r1?a/Math.max(1,bud(r1,cm))*100:0,hr=a/Math.max(1,S.rate);let cum=0,k=0;for(const x of S.items){cum+=bud(x,months[1]);if(cum>a)break;k++}
@@ -315,6 +315,23 @@ function impList(ym){const L=S.imp.filter(x=>x.ym==ym);if(!L.length)return `<div
 return `<div class=card><h2>Imprevistos de ${ml(ym)}<span>${f(L.reduce((a,x)=>a+x.a,0))}</span></h2>${L.map(x=>`<div class=l1 style="padding:6px 0;border-top:1px solid #eef"><span class=n style="white-space:normal">${esc(x.desc)}<br><small style="color:#667;font-weight:400">${x.dt} · ${esc(x.cat)} · ${esc(x.fp)}</small></span><b>${f(x.a)}</b><button class=del onclick="delImp('${x.id}')">✕</button></div>`).join('')}
 <div style="margin-top:6px;font-size:13px"><b>Por forma de pago:</b>${Object.keys(by).map(k=>`<div class=tot><span>${esc(k)}${isCard(k)?' (deuda)':''}</span><b>${f(by[k])}</b></div>`).join('')}</div>
 <div class=tot><span>Sale del efectivo</span><b class=neg>${f(impCash(ym))}</b></div><div class=tot><span>Cargado a tarjetas</span><b>${f(impCard(ym))}</b></div></div>`}
+
+// ===== pestaña Imprimir =====
+const PSECS=[['hoy','Hoy'],['pri','Prioridad'],['ing','Ingresos y trabajos'],['pro','Proyección'],['imp','Imprevistos'],['anu','Calendario anual']];
+function secHTML(k){const keep=tab;let h='';try{tab=k;
+if(k=='hoy')h=vHoy0();else if(k=='pri')h=vPri();else if(k=='ing')h=vIng()+vTra0();else if(k=='pro')h=vPro();
+else if(k=='imp'){const ms=[...new Set((S.imp||[]).map(x=>x.ym))].sort();h=ms.length?ms.map(impList).join(''):'<div class=card><small>No hay imprevistos registrados.</small></div>'}
+else if(k=='anu'){const an=S.annual||[];h=`<div class=card><table><tr><th>Gasto</th><th>Monto/año</th><th>Vence</th><th>Apartar/mes</th></tr>${an.map(x=>`<tr><td>${esc(x.n)}</td><td>${f(+x.a||0)}</td><td>${MN[(x.m||1)-1].toLowerCase()}</td><td>${f((+x.a||0)/12)}</td></tr>`).join('')}<tr><td><b>Total</b></td><td><b>${f(an.reduce((a,x)=>a+(+x.a||0),0))}</b></td><td></td><td><b>${f(an.reduce((a,x)=>a+(+x.a||0),0)/12)}</b></td></tr></table></div>`}}finally{tab=keep}return h}
+function buildPrint(){S.psel=S.psel||{hoy:1,pri:1,ing:1,pro:1,imp:1,anu:1};const box=document.createElement('div');box.innerHTML=printHead(false);
+PSECS.filter(([k])=>S.psel[k]).forEach(([k,n])=>{const sec=document.createElement('section');sec.className='psec';sec.innerHTML=`<h2 class=pt>${n}</h2>`+secHTML(k);box.appendChild(sec)});staticize(box);return box}
+function vImp(){S.psel=S.psel||{hoy:1,pri:1,ing:1,pro:1,imp:1,anu:1};const L=projMonths();
+setTimeout(()=>{const pv=document.getElementById('pprev');if(pv){pv.innerHTML='';pv.appendChild(buildPrint())}},0);
+return `<div class=card><h2>Imprimir / Guardar PDF</h2><div class=mgrid>${PSECS.map(([k,n])=>`<label style="display:flex;gap:8px;align-items:center;font-size:15px;min-height:40px"><input type=checkbox style="width:26px;height:26px" ${S.psel[k]?'checked':''} onchange="S.psel['${k}']=this.checked?1:0;save();render()">${n}</label>`).join('')}</div>
+<div class=tot><span>Escenario</span><b>${SC[S.pr.scen][0]}</b></div><div class=tot><span>Meses</span><b>${ml(L[0])} – ${ml(L[L.length-1])}</b></div><small>Escenario y meses se cambian en Proyección.</small>
+<button class=btn style="width:100%;font-size:18px;margin-top:10px;min-height:56px" onclick="printNow()">🖨️ Imprimir / Guardar PDF</button>
+<small>En iPhone: se abre la pantalla de imprimir de Safari → Imprimir, o toque Compartir → Guardar en Archivos (PDF).</small></div>
+<div class=card><h2>Vista previa</h2><div id=pprev class=pprev></div></div>`}
+function printNow(){const b=document.getElementById('printbox');b.innerHTML='';b.appendChild(buildPrint());document.body.classList.add('printing');setTimeout(()=>window.print(),80)}
 
 load();render();
 </script></body></html>
