@@ -44,9 +44,16 @@ svg{width:100%;height:auto;display:block}
 .pr input[type=number]{width:100%;font-size:16px;padding:8px 4px;border:1px solid #ccd;border-radius:8px;text-align:right}.pr b{text-align:right;font-size:13px}
 .pr .nm{width:100%;font-size:15px;font-weight:600;border:0;background:transparent;padding:6px 0}.num{font-weight:700;color:#556}.hc{display:none}.hd{text-align:right;padding-right:6px}.unc{background:#fdecea}
 @media(min-width:760px){.pr{grid-template-columns:30px minmax(0,1fr) 110px 110px 100px 150px}.pr .pn,.pr .cd,.pr .cp,.pr .cf,.pr .mv{grid-column:auto;max-width:none}.hc{display:block}.hd{text-align:left}}
+#printbox{display:none}
+@media print{@page{size:letter portrait;margin:12mm}body{background:#fff!important;padding:0!important;font-size:11pt;color:#000}header,nav,main,.noprint{display:none!important}
+body.printing #printbox{display:block}#printbox .card{box-shadow:none;border:1px solid #ccc;break-inside:avoid;page-break-inside:avoid;margin:0 0 8px;padding:8px}
+.psec{break-before:page;page-break-before:always}.psec:first-of-type{break-before:auto;page-break-before:auto}.phead h1{font-size:18pt;margin:0}.phead{border-bottom:2px solid #123a5e;margin-bottom:8px;padding-bottom:4px;font-size:9pt}
+.pt{font-size:14pt;color:#123a5e;margin:6px 0}.pv{font-weight:600}.mc{border:1px solid #ddd!important;background:#fff!important}.grid.two{grid-template-columns:1fr 1fr!important}.mgrid{grid-template-columns:repeat(4,1fr)!important}
+.pr{grid-template-columns:24px minmax(0,1fr) 80px 80px 80px!important}.pr .pn,.pr .cd,.pr .cp,.pr .cf{grid-column:auto!important;max-width:none!important}.bar{border:1px solid #999}.bar i{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.neg,.pos,.unc,.warn,.ok{-webkit-print-color-adjust:exact;print-color-adjust:exact}svg{max-height:70mm}}
 </style></head><body>
 <header><h1>Calculadora de Vida</h1><div class="sub" id="hsub"></div></header>
-<main id="main"><noscript><p style="padding:20px">Esta app necesita JavaScript. Ábrala en Safari.</p></noscript></main>
+<div id="printbox"></div><main id="main"><noscript><p style="padding:20px">Esta app necesita JavaScript. Ábrala en Safari.</p></noscript></main>
 <nav id="nav"></nav>
 <script>
 const K='plan_presupuesto_vacio_v1',$=i=>document.getElementById(i);
@@ -54,7 +61,7 @@ const f=x=>(x<-0.004?'−':'')+'$'+Math.abs(Math.round(x*100)/100).toLocaleStrin
 const MN=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
 const now=new Date(),YM=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
 const months=[...Array(12)].map((_,i)=>YM(new Date(now.getFullYear(),now.getMonth()+i,1))),cm=months[0];
-const ml=ym=>MN[+ym.slice(5)-1]+' '+ym.slice(2,4);
+const ml=ym=>MN[+ym.slice(5)-1].toLowerCase()+' '+ym.slice(0,4);
 const TIERS=[['t1','1) SUPERVIVENCIA obligatoria','Pagar siempre primero. No recortar.'],['t2','2) Deudas – pagos mínimos','Solo el mínimo; evita multas y daño al crédito.'],['t3','3) Negocio esencial (apartado mensual)','Guardar cada mes para no quedarse sin licencias y software.'],['t4','4) Opcional / recortable','Aquí NO gastar mientras haya déficit.']];
 let id=0;const I=(t,n,b,d,note,hist,ov)=>({id:'i'+(id++),t,n,b,d,note:note||'',hist:hist||0,ov:ov||{}});
 function def(){id=0;return{bal:0,goal:1800,w:{Seguro:1,Probable:.6,Posible:0},
@@ -65,7 +72,7 @@ I('t3','Software (apartado mensual)',189,0),I('t3','Licencias (apartado mensual)
 I('t4','Restaurantes (límite)',0,0),I('t4','Suscripciones (límite)',50,0),I('t4','Compras (límite)',50,0),I('t4','Entretenimiento (límite)',0,0),I('t4','Salud (límite)',50,0),I('t4','Transporte (límite)',40,0)],
 inc:[{n:'Ingreso fijo',a:1500,d:1}],jobs:[],act:{},paid:{},put:{},avail:{}}}
 let S,tab='hoy',WI={g:0,c:0},sel=cm;
-function load(){try{S=JSON.parse(localStorage.getItem(K))}catch(e){S=null}if(!S||!S.items){S=def();save()}S.put=S.put||{};S.avail=S.avail||{};migrate();migrate3();}
+function load(){try{S=JSON.parse(localStorage.getItem(K))}catch(e){S=null}if(!S||!S.items){S=def();save()}S.put=S.put||{};S.avail=S.avail||{};migrate();migrate3();migrate4();}
 const save=()=>{try{localStorage.setItem(K,JSON.stringify(S))}catch(e){}};
 const bud=(x,ym)=>x.ov[ym]!=null?+x.ov[ym]:+x.b;
 const act=(x,ym)=>(S.act[ym]||{})[x.id];const isPaid=(k,ym)=>!!(S.paid[ym]||{})[k];
@@ -74,7 +81,6 @@ const fixedInc=()=>S.inc.reduce((a,x)=>a+(+x.a||0),0);
 function jobsInc(ym,mode){return S.jobs.filter(j=>j.m==ym).reduce((a,j)=>a+(+j.a||0)*(1-(j.tax??S.taxPct)/100)*(mode=='opt'?(j.p=='Posible'?1:1):mode=='exp'?(S.w[j.p]||0):0),0)}
 function remainingOut(ym){return impCash(ym)+S.items.reduce((a,x)=>{const b=bud(x,ym);if(ym!=cm)return a+b;if(isPaid(x.id,ym))return a;const s=act(x,ym)||0;return a+Math.max(0,b-s)},0)}
 function remainingIn(ym,mode){let fi=S.inc.reduce((a,x,i)=>a+(ym==cm&&isPaid('inc'+i,ym)?0:+x.a||0),0);return fi+jobsInc(ym,mode)}
-function proj(mode,wi){wi=wi||{g:0,c:0};let c=+S.bal;return months.map(ym=>{let i=mode=='base'?(ym==cm?remainingIn(ym,'fix'):baseInc()):remainingIn(ym,mode),o=remainingOut(ym);if(ym==cm){i+=wi.c;o+=wi.g}c+=i-o;return{ym,i,o,c}})}
 const survMin=ym=>tierSum('t1',ym)+tierSum('t2',ym),withT3=ym=>survMin(ym)+tierSum('t3',ym);
 function render(){if(!S)S=def();$('nav').innerHTML=[['hoy','🏠','Hoy'],['pri','🔢','Prioridad'],['ing','💵','Ingresos'],['tra','🔨','Trabajo'],['pro','📈','Proyección'],['mas','🧰','Más']].map(([k,e,n])=>`<button class="${tab==k?'on':''}" onclick="tab='${k}';render();scrollTo(0,0)"><b>${e}</b>${n}</button>`).join('');
 const p=proj('exp');const out=p.find(x=>x.c<0);$('hsub').textContent=`Saldo hoy ${f(S.bal)} · ${out?'Sin dinero en '+ml(out.ym)+' (esperado)':'Proyección esperada positiva'}`;
@@ -83,7 +89,7 @@ function light(t,ym){const its=S.items.filter(x=>x.t==t);if(t=='t4'){const over=
 const unpaid=its.filter(x=>!isPaid(x.id,ym)).length;return unpaid==0?'var(--g)':(ym==cm?'var(--y)':'#9aa')}
 
 const TC={t1:'#1a8a3f',t2:'#e0a100',t3:'#6a5acd',t4:'#c62828'};
-function vPri(){const ym=sel,P=S.put[ym]||{};let h=impBtn()+`<div class="msel">${months.map(m=>`<button class="${m==ym?'on':''}" onclick="sel='${m}';render()">${ml(m)}</button>`).join('')}</div>`;
+function vPri(){const ym=sel,P=S.put[ym]||{};let h=printBar()+impBtn()+`<div class="msel">${months.map(m=>`<button class="${m==ym?'on':''}" onclick="sel='${m}';render()">${ml(m)}</button>`).join('')}</div>`;
 const av=S.avail[ym]??'',tD=S.items.reduce((a,x)=>a+bud(x,ym),0),tP=S.items.reduce((a,x)=>a+(+P[x.id]||0),0);
 let firstGap=S.items.findIndex(x=>(+P[x.id]||0)<bud(x,ym)-0.005);
 h+=`<div class=card><label class=f style="font-size:14px;color:#123">Dinero disponible este mes<input type=number inputmode=decimal value="${av}" placeholder="0" onchange="S.avail[sel]=this.value===''?undefined:+this.value;save();render()" style="font-size:20px"></label>
@@ -128,22 +134,58 @@ function vIng(){let h=`<div class="card"><h2>Ingreso fijo</h2>${S.inc.map((x,i)=
 <button class=btn onclick="addJob()">+ Agregar</button></div>`;
 S.jobs.forEach((j,i)=>h+=`<div class=it><div class=l1><span class=n>${esc(j.n)} – ${ml(j.m)}</span><b>${f(j.a)}</b><button class=del onclick="S.jobs.splice(${i},1);save();render()">✕</button></div><div class=note>${j.p} (cuenta ${Math.round((S.w[j.p]||0)*100)}% en esperado) · aparta ${j.tax??S.taxPct}% impuestos = ${f((+j.a)*(j.tax??S.taxPct)/100)}</div></div>`);
 if(!S.jobs.length)h+='<p style="color:#667;font-size:14px">Aún no hay trabajos. Agregue cada trabajo con su mes y probabilidad.</p>';return h+'</div>'}
-function chart(ps){const W=640,H=230,P=34;const all=ps.flatMap(p=>p.map(x=>x.c)).concat([0]);const mx=Math.max(...all),mn=Math.min(...all),rg=(mx-mn)||1;
-const y=v=>P/2+(mx-v)/rg*(H-P),x=i=>P+i*(W-P-8)/11,col=['#888','#c62828','#123a5e','#1a8a3f'];
+const addM=(ym,n)=>{const d=new Date(+ym.slice(0,4),+ym.slice(5)-1+n,1);return YM(d)};
+const mdiff=(a,b)=>(+b.slice(0,4)-+a.slice(0,4))*12+(+b.slice(5)-+a.slice(5));
+function projMonths(){const p=S.pr;let s=p.start<cm?cm:p.start,e=p.end;if(mdiff(s,e)<0)e=s;if(mdiff(s,e)>59)e=addM(s,59);const L=[];for(let m=s;mdiff(m,e)>=0;m=addM(m,1))L.push(m);return L}
+function proj(mode,wi,list){wi=wi||{g:0,c:0};list=list||months;let c=+S.bal;const O=S.ovm||{},last=list[list.length-1],out=[];
+for(let ym=cm;mdiff(ym,last)>=0;ym=addM(ym,1)){let i=mode=='base'?(ym==cm?remainingIn(ym,'fix'):baseInc()):remainingIn(ym,mode),o=remainingOut(ym);const v=O[ym];
+if(v){if(v.inc!=null)i=+v.inc;i+=+v.extra||0;if(v.exp!=null)o=+v.exp;else (v.skip||[]).forEach(id=>{const x=gi(id);if(x)o-=bud(x,ym)});o+=+v.one||0}
+if(ym==cm){i+=wi.c;o+=wi.g}c+=i-o;if(list.includes(ym))out.push({ym,i,o,c})}return out}
+function chart(ps,list,cols){const W=640,H=230,P=40,n=Math.max(1,list.length-1);const all=ps.flatMap(p=>p.map(x=>x.c)).concat([0]);const mx=Math.max(...all),mn=Math.min(...all),rg=(mx-mn)||1;
+const y=v=>P/2+(mx-v)/rg*(H-P),x=i=>P+i*(W-P-30)/n;
 let s=`<svg viewBox="0 0 ${W} ${H}" role=img><line x1=${P} x2=${W} y1=${y(0)} y2=${y(0)} stroke="#999" stroke-dasharray="4"/>`;
 const lbl=v=>Math.abs(v)>=1000?(v/1000).toFixed(1)+"k":String(Math.round(v));[...new Set([mx,0,mn])].forEach(v=>s+=`<text x=2 y=${y(v)+4} font-size=11 fill="#555">${lbl(v)}</text>`);
-months.forEach((m,i)=>i%2==0&&(s+=`<text x=${x(i)-12} y=${H-2} font-size=11 fill="#555">${ml(m)}</text>`));
-ps.forEach((p,k)=>s+=`<polyline fill=none stroke=${col[k]} stroke-width=3 points="${p.map((d,i)=>x(i)+','+y(d.c)).join(' ')}"/>`);return s+'</svg>'}
-function vPro(){const sc=[['Base (mes más bajo)','base'],['Sin trabajos (solo fijo)','fix'],['Esperado (seguro + probable ponderado)','exp'],['Optimista (todos)','opt']];const ps=sc.map(s=>proj(s[1]));
-let h=`<div class="card"><h2>Proyección 12 meses</h2>${chart(ps)}<div style="font-size:13px;margin-top:6px"><span style="color:#888">■</span> Base &nbsp;<span style="color:#c62828">■</span> Sin trabajos &nbsp;<span style="color:#123a5e">■</span> Esperado &nbsp;<span style="color:#1a8a3f">■</span> Optimista</div></div><div class="grid two">`;
-sc.forEach(([n],k)=>{const p=ps[k],o=p.find(x=>x.c<0);h+=`<div class=card><h2>${n}</h2><div class=tot><span>Saldo en ${ml(months[11])}</span><b class="${p[11].c<0?'neg':'pos'}">${f(p[11].c)}</b></div>
-<div class=tot><span>Se queda sin dinero</span><b class="${o?'neg':'pos'}">${o?ml(o.ym):'No'}</b></div><div class=tot><span>Punto más bajo</span><b>${f(Math.min(...p.map(x=>x.c)))}</b></div></div>`});
-const nx=months[1];const g=S.goal,pe=ps[2],saved=Math.max(0,pe[Math.min(5,11)].c);
-h+=`</div><div class=card><h2>Ingreso mínimo necesario (mes típico, ${ml(nx)})</h2><div class=tot><span>Sobrevivir (niveles 1+2)</span><b>${f(survMin(nx))}</b></div>
-<div class=tot><span>+ negocio esencial (nivel 3)</span><b>${f(withT3(nx))}</b></div><div class=tot><span>+ opcional al límite (nivel 4)</span><b>${f(withT3(nx)+tierSum('t4',nx))}</b></div>
-<div class=tot><span>Ingreso fijo actual</span><b>${f(fixedInc())}</b></div><div class="tot big"><span>Falta por mes (niveles 1–3)</span><span class=neg>${f(Math.max(0,withT3(nx)-fixedInc()))}</span></div></div>
-<div class=card><h2>Fondo de mudanza – meta ${f(g)}</h2><div class=bar style="height:16px"><i style="width:${Math.min(100,saved/g*100)}%"></i></div><div class=note style="color:#334;margin-top:6px">Saldo positivo proyectado en ${ml(months[5])} (esperado): ${f(saved)} de ${f(g)}</div></div>
-<div class=card><h2>Detalle mensual</h2><div class=mgrid>${months.map((m,i)=>`<div class=mc><b>${ml(m)}</b>Entra ${f(pe[i].i)}<br>Sale ${f(pe[i].o)}<br>Saldo <span class="${pe[i].c<0?'neg':'pos'}">${f(pe[i].c)}</span><br><small>Sin trabajos: <span class="${ps[1][i].c<0?'neg':'pos'}">${f(ps[1][i].c)}</span></small></div>`).join('')}</div></div>`;return h}
+const st=Math.ceil(list.length/6);list.forEach((m,i)=>i%st==0&&(s+=`<text x=${x(i)-18} y=${H-2} font-size=11 fill="#555">${ml(m)}</text>`));
+ps.forEach((p,k)=>s+=`<polyline fill=none stroke=${cols[k]} stroke-width=${k==ps.length-1?4:2} points="${p.map((d,i)=>x(i)+','+y(d.c)).join(' ')}"/>`);return s+'</svg>'}
+const SC={fix:['Sin trabajos (solo fijo)','#c62828'],base:['Base (mes más bajo)','#888888'],exp:['Esperado','#123a5e'],opt:['Optimista','#1a8a3f']};
+let edM=null;
+function monthOpts(v){let o='';for(let k=0;k<60;k++){const m=addM(cm,k);o+=`<option value=${m} ${m==v?'selected':''}>${ml(m)}</option>`}return o}
+function vPro(){const L=projMonths(),sc=S.pr.scen,p=proj(sc,null,L),last=p[p.length-1],o=p.find(x=>x.c<0),others=Object.keys(SC).filter(k=>k!=sc);
+const fx=fixedInc(),avgOut=p.reduce((a,x)=>a+x.o,0)/p.length,gap=avgOut-fx;
+let h=printBar()+`<div class="card noprint"><h2>Proyección</h2><div class=row><label class=f>Desde<select class=t onchange="S.pr.start=this.value;save();render()">${monthOpts(L[0])}</select></label><label class=f>Hasta<select class=t onchange="S.pr.end=this.value;save();render()">${monthOpts(L[L.length-1])}</select></label></div>
+<div class=row style="margin-top:6px">${[3,6,12,24,36].map(n=>`<button class="btn s" style="flex:1 1 50px;padding:10px 4px" onclick="S.pr.start=cm;S.pr.end=addM(cm,${n-1});save();render()">${n} m</button>`).join('')}</div>
+<div class=msel style="margin-top:8px">${Object.keys(SC).map(k=>`<button class="${k==sc?'on':''}" onclick="S.pr.scen='${k}';save();render()">${SC[k][0].split(' (')[0]}</button>`).join('')}</div>
+<label class=f>Saldo inicial (hoy) $<input type=number inputmode=decimal value="${S.bal}" onchange="S.bal=+this.value;save();render()"></label></div>
+<div class=card style="text-align:center"><div style="font-size:14px;color:#556">${SC[sc][0]} · saldo al final de <b>${ml(last.ym)}</b></div>
+<div style="font-size:34px;font-weight:800" class="${last.c<0?'neg':'pos'}">${f(last.c)}</div>
+<div style="font-size:13px;color:#445;margin-top:4px">${sc=='fix'?`Si solo entra ${f(fx)} fijo: faltan ${f(Math.max(0,gap))}/mes × ${L.length} meses ${S.bal<0?'+ saldo inicial '+f(S.bal):S.bal>0?'− saldo inicial a favor '+f(S.bal):''}`:`Entra en promedio ${f(p.reduce((a,x)=>a+x.i,0)/p.length)}/mes y sale ${f(avgOut)}/mes durante ${L.length} meses, desde saldo ${f(S.bal)}`}</div>
+<div class=tot style="margin-top:6px"><span>Se queda sin dinero</span><b class="${o?'neg':'pos'}">${o?ml(o.ym):'No'}</b></div><div class=tot><span>Punto más bajo</span><b>${f(Math.min(...p.map(x=>x.c)))}</b></div></div>
+<div class="card pchart">${chart([...others.map(k=>proj(k,null,L)),p],L,[...others.map(k=>SC[k][1]+'88'),SC[sc][1]])}<small>Línea gruesa = ${SC[sc][0]}; finas = otros escenarios.</small></div>
+${edM?editMonth(edM):''}
+<div class=card><h2>Mes por mes <small style="font-weight:400" class=noprint>(toque un mes para editarlo)</small></h2><div class=mgrid>${p.map(x=>{const v=(S.ovm||{})[x.ym];return `<button class=mc style="text-align:left;border:${x.ym==edM?'2px solid #123a5e':'0'};font:inherit;color:inherit" onclick="edM='${x.ym}';render();setTimeout(()=>{const e=document.getElementById('edm');e&&e.scrollIntoView({block:'start'})},50)"><b>${ml(x.ym)} ${v?'<span class=dot style="background:#e07b00"></span>':''}</b>Entra ${f(x.i)}<br>Sale ${f(x.o)}<br>Saldo <span class="${x.c<0?'neg':'pos'}">${f(x.c)}</span>${v&&v.note?`<br><small>📝 ${esc(v.note)}</small>`:''}</button>`}).join('')}</div></div>
+<div class=card><h2>Ingreso mínimo necesario (${ml(months[1])})</h2><div class=tot><span>Sobrevivir (niveles 1+2)</span><b>${f(survMin(months[1]))}</b></div><div class=tot><span>+ negocio esencial (nivel 3)</span><b>${f(withT3(months[1]))}</b></div>
+<div class=tot><span>Ingreso fijo actual</span><b>${f(fx)}</b></div><div class="tot big"><span>Falta por mes (niveles 1–3)</span><span class=neg>${f(Math.max(0,withT3(months[1])-fx))}</span></div></div>`;return h}
+function editMonth(ym){const v=(S.ovm||{})[ym]||{};
+return `<div class="card noprint" id=edm style="border:2px solid #123a5e"><h2>Editar ${ml(ym)}<button class="btn s" style="padding:6px 12px;min-height:36px" onclick="edM=null;render()">Cerrar</button></h2>
+<small>Vacío = usar el cálculo normal.</small><div class=row><label class=f>Ingreso total del mes $<input type=number inputmode=decimal value="${v.inc??''}" placeholder="auto" onchange="setOv('${ym}','inc',this.value)"></label><label class=f>+ Ingreso extra esperado $<input type=number inputmode=decimal value="${v.extra??''}" placeholder="0" onchange="setOv('${ym}','extra',this.value)"></label></div>
+<div class=row><label class=f>Gastos total del mes $<input type=number inputmode=decimal value="${v.exp??''}" placeholder="auto" onchange="setOv('${ym}','exp',this.value)"></label><label class=f>+ Gasto único (una vez) $<input type=number inputmode=decimal value="${v.one??''}" placeholder="0" onchange="setOv('${ym}','one',this.value)"></label></div>
+<div style="margin:8px 0 4px;font-size:13px;font-weight:700">Quitar partidas este mes (ej. sin storage):</div><div class=mgrid>${S.items.filter(x=>bud(x,ym)>0).map(x=>`<label style="font-size:13px;display:flex;gap:6px;align-items:center"><input type=checkbox style="width:24px;height:24px" ${(v.skip||[]).includes(x.id)?'checked':''} onchange="togSkip('${ym}','${x.id}',this.checked)">${esc(x.n)} (${f(bud(x,ym))})</label>`).join('')}</div>
+<label class=f style="margin-top:6px">Nota<input class=t style="text-align:left" value="${esc(v.note||'')}" onchange="setOv('${ym}','note',this.value,1)"></label>
+<button class="btn r" style="width:100%;margin-top:8px" onclick="if(S.ovm)delete S.ovm['${ym}'];save();render()">Restablecer mes</button></div>`}
+function setOv(ym,k,val,txt){S.ovm=S.ovm||{};const v=S.ovm[ym]=S.ovm[ym]||{};v[k]=txt?val:(val===''?null:+val);clean(ym);save();render()}
+function togSkip(ym,id,on){S.ovm=S.ovm||{};const v=S.ovm[ym]=S.ovm[ym]||{};v.skip=(v.skip||[]).filter(x=>x!=id);if(on)v.skip.push(id);clean(ym);save();render()}
+function clean(ym){const v=S.ovm[ym];if(v&&v.inc==null&&!v.extra&&v.exp==null&&!v.one&&!(v.skip||[]).length&&!v.note)delete S.ovm[ym]}
+function migrate4(){if(S.v>=4)return;S.pr={start:cm,end:addM(cm,11),scen:'fix'};S.ovm={};S.v=4;save()}
+// ===== impresión =====
+function printHead(full){const L=projMonths();return `<div class=phead><h1>Calculadora de Vida</h1><div>Generado: ${new Date().toLocaleString('es-US')} · Escenario: ${SC[S.pr.scen][0]} · Meses: ${ml(L[0])} – ${ml(L[L.length-1])}${full?' · Reporte completo':''}</div></div>`}
+function staticize(root){root.querySelectorAll('input,select,textarea').forEach(el=>{let t='';if(el.type=='checkbox')t=el.checked?'☑':'☐';else if(el.tagName=='SELECT')t=el.options[el.selectedIndex]?el.options[el.selectedIndex].text:'';else t=el.value||'—';const sp=document.createElement('span');sp.className='pv';sp.textContent=t;el.replaceWith(sp)});root.querySelectorAll('button:not(.mc)').forEach(b=>b.remove())}
+function doPrint(full){const tabs=full?['hoy','pri','tra','pro','mas']:[tab],names={hoy:'Hoy',pri:'Prioridad',tra:'Buscar trabajo',pro:'Proyección',mas:'Herramientas'};
+const box=document.getElementById('printbox');box.innerHTML=printHead(full);const keep=tab;
+tabs.forEach((t,i)=>{tab=t;const sec=document.createElement('section');sec.className='psec';sec.innerHTML=`<h2 class=pt>${names[t]||t}</h2>`+({hoy:vHoy0,pri:vPri,tra:vTra0,pro:vPro,mas:vMas})[t]();box.appendChild(sec)});
+tab=keep;staticize(box);document.body.classList.add('printing');setTimeout(()=>{window.print()},60)}
+window.addEventListener('afterprint',()=>{document.body.classList.remove('printing');const b=document.getElementById('printbox');if(b)b.innerHTML=''});
+function printBar(){return `<div class="row noprint" style="margin-bottom:10px"><button class="btn s" onclick="doPrint(false)">🖨️ Imprimir / PDF</button><button class="btn s" onclick="doPrint(true)">📄 Reporte completo</button></div>`}
+
 function vAj(){return `<div class=card><h2>Saldo actual</h2><label class=f>Saldo de hoy (todas sus cuentas)<input type=number inputmode=decimal value="${S.bal}" onchange="S.bal=+this.value;save();render()"></label>
 <label class=f style="margin-top:8px">Meta fondo de mudanza<input type=number value="${S.goal}" onchange="S.goal=+this.value;save();render()"></label></div>
 <div class=card><h2>Peso de probabilidad (escenario esperado)</h2><div class=row>${['Seguro','Probable','Posible'].map(p=>`<label class=f>${p} %<input type=number value="${Math.round(S.w[p]*100)}" onchange="S.w['${p}']=this.value/100;save()"></label>`).join('')}</div></div>
@@ -191,7 +233,7 @@ function nextPays(){const td=now.getDate(),L=[];S.items.forEach(x=>{if(x.d&&x.d>
 S.items.forEach(x=>{if(x.d&&bud(x,months[1])>0)L.push({n:x.n,a:bud(x,months[1]),d:x.d,m:months[1]})});return L.sort((a,b)=>a.m<b.m?-1:a.m>b.m?1:a.d-b.d).slice(0,3)}
 function irsNext(){const ds=[[0,15],[3,15],[5,15],[8,15]];for(let y=now.getFullYear();y<=now.getFullYear()+1;y++)for(const[m,d]of ds){const t=new Date(y,m,d);if(t>=now)return t}}
 function runout(p){const o=p.find(x=>x.c<0);return o?ml(o.ym):'No se acaba'}
-function vHoy(){return impBtn()+vHoy0()}
+function vHoy(){return printBar()+impBtn()+vHoy0()}
 function vHoy0(){const g=monthGap(WI),dc=Math.max(0,(+S.bal+(+S.cushion||0)))/daily(),top=ranked().slice(0,2),np=nextPays(),p=proj('exp',WI),irs=irsNext();
 return `<div class=card style="text-align:center"><div style="font-size:14px;color:#667">${ml(cm)} · después de lo ya pagado</div>
 <div style="font-size:34px;font-weight:800;margin:6px 0" class="${g>0?'neg':'pos'}">${g>0?'Te faltan '+f(g):'Cubierto ✓'}</div>
@@ -208,7 +250,8 @@ const pd=ranked()[0];return `<div class=tot><span>Como gasto</span><b>= ${d.toFi
 ${r1?`<div class=tot><span></span><b>= ${pr.toFixed(0)}% de “${esc(r1.n)}”</b></div>`:''}<div class=tot><span></span><b>= ${hr.toFixed(1)} h de trabajo a ${f(S.rate)}/h</b></div>
 <div class=tot><span>Como cobro (neto ${100-S.taxPct}% tras impuestos: ${f(a*(1-S.taxPct/100))})</span><b>cubre ${(a*(1-S.taxPct/100)/daily()).toFixed(0)} días</b></div>
 <div class=tot><span></span><b>${k>=S.items.length?'cubre todo el mes':k==0?'no alcanza la fila 1':'cubre el mes hasta la fila '+k}</b></div>${pd?`<div class=tot><span></span><b>= ${(a/Math.max(1,pd.pd)).toFixed(1)} días de “${esc(pd.n.split(' (')[0])}”</b></div>`:''}`}
-function vTra(){const rk=ranked(),sv=survMin(months[1]),gap=Math.max(0,withT3(months[1])-fixedInc()),top=rk[0],need=top?Math.ceil(gap/Math.max(1,top.net)):0,
+function vTra(){return printBar()+vTra0()}
+function vTra0(){const rk=ranked(),sv=survMin(months[1]),gap=Math.max(0,withT3(months[1])-fixedInc()),top=rk[0],need=top?Math.ceil(gap/Math.max(1,top.net)):0,
 q=Math.ceil(need/Math.max(.05,S.fun.close/100)),c=Math.ceil(q/Math.max(.05,S.fun.reply/100));
 let h=`<div class=card><h2>Enfoque de esta semana</h2>${rk.slice(0,2).map((j,k)=>`<div class=ok><b>${k+1}. ${esc(j.n)}</b><br>Neto por trabajo ${f(j.net)} · ${f(j.pd)}/día · cobra en ~${j.p} días${j.rec?' · ingreso recurrente':''}</div>`).join('')}
 <small>Orden: neto por día, bonificando lo recurrente y lo que se cobra rápido. Neto = cobro − costos directos − ${S.taxPct}% impuestos.</small></div>
